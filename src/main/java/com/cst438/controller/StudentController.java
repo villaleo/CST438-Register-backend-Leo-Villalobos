@@ -15,6 +15,12 @@ public class StudentController {
         this.studentRepository = studentRepository;
     }
 
+    /**
+     * This method is called by the registration service to create a new student.
+     * @param studentDTO The student to be created. The student_id field is ignored.
+     * @return The student that was created.
+     * @throws ResponseStatusException If the student already exists.
+     */
     @PostMapping("/student")
     public StudentDTO addStudent(@RequestBody StudentDTO studentDTO) {
         System.out.println("/student called.");
@@ -35,6 +41,33 @@ public class StudentController {
         studentRepository.save(student);
         // Reflect the auto-increment in returned JSON
         studentDTO.student_id = student.getStudent_id();
+        return studentDTO;
+    }
+
+    /**
+     * This method is called by the registration service to update the status and status code of an existing student.
+     * The student_id field is required. This operation is idempotent.
+     * @param student_id The id of the student to be updated.
+     * @param studentDTO The student to be updated.
+     * @return The student that was updated.
+     * @throws ResponseStatusException If the student does not exist.
+     */
+    @PutMapping("/student/status/{student_id}")
+    public StudentDTO updateStatus(@PathVariable int student_id, @RequestBody StudentDTO studentDTO) {
+        System.out.println("/student/" + student_id + " called.");
+
+        var student = studentRepository.findById(student_id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Student with id '%d' not found.", student_id)));
+
+        // Update the student with the new status code and status
+        student.setStatusCode(studentDTO.statusCode);
+        student.setStatus(studentDTO.status);
+        studentRepository.save(student);
+
+        // Match the StudentDTO fields to the Student fields
+        studentDTO.student_id = student.getStudent_id();
+        studentDTO.name = student.getName();
+        studentDTO.email = student.getEmail();
         return studentDTO;
     }
 }
