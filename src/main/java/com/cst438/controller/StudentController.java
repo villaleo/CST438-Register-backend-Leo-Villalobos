@@ -4,6 +4,7 @@ import com.cst438.domain.Student;
 import com.cst438.domain.StudentDTO;
 import com.cst438.domain.StudentRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -22,6 +23,7 @@ public class StudentController {
      * @throws ResponseStatusException If the student already exists.
      */
     @PostMapping("/student")
+    @Transactional
     public StudentDTO addStudent(@RequestBody StudentDTO studentDTO) {
         System.out.println("/student called.");
 
