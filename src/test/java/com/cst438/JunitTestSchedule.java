@@ -227,64 +227,47 @@ public class JunitTestSchedule {
 	public void testPlaceHold() throws Exception {
 		MockHttpServletResponse response;
 
-		var studentDTO = new StudentDTO(TEST_STUDENT_NAME, TEST_STUDENT_EMAIL);
-		studentDTO.student_id = TEST_STUDENT_ID;
-		studentDTO.status = "HOLD"; // update status to HOLD
-
 		var student = new Student();
 		student.setStudent_id(TEST_STUDENT_ID);
 		student.setName(TEST_STUDENT_NAME);
 		student.setEmail(TEST_STUDENT_EMAIL);
-		student.setStatusCode(0);
-		// student currently has no holds (statusCode = null)
 
 		given(studentRepository.findById(TEST_STUDENT_ID)).willReturn(Optional.of(student));
 		given(studentRepository.save(any(Student.class))).willReturn(student);
 
+		var holdReason = "Too many books overdue";
 		response = mvc.perform(MockMvcRequestBuilders
-						.put("/student/status/" + TEST_STUDENT_ID)
-						.characterEncoding("utf-8")
-						.content(asJsonString(studentDTO))
+						.put(String.format("/student/%d?status=%d&msg=%s", TEST_STUDENT_ID, StudentDTO.HOLD, holdReason))
 						.contentType(MediaType.APPLICATION_JSON)
 						.accept(MediaType.APPLICATION_JSON))
 				.andReturn().getResponse();
 
 		assertEquals(200, response.getStatus());
-		StudentDTO result = fromJsonString(response.getContentAsString(), StudentDTO.class);
 		verify(studentRepository).save(any(Student.class));
-		assertEquals(result.status, "HOLD");
 	}
 
 	@Test
 	public void testRemoveHold() throws Exception {
 		MockHttpServletResponse response;
 
-		var studentDTO = new StudentDTO(TEST_STUDENT_NAME, TEST_STUDENT_EMAIL);
-		studentDTO.student_id = TEST_STUDENT_ID;
-		studentDTO.status = null; // null status means remove hold
-
 		var student = new Student();
 		student.setStudent_id(TEST_STUDENT_ID);
 		student.setName(TEST_STUDENT_NAME);
 		student.setEmail(TEST_STUDENT_EMAIL);
-		student.setStatusCode(0);
-		student.setStatus("HOLD"); // student has a hold
+		student.setStatusCode(StudentDTO.HOLD);
+		student.setStatus("Too many books overdue");
 
 		given(studentRepository.findById(TEST_STUDENT_ID)).willReturn(Optional.of(student));
 		given(studentRepository.save(any(Student.class))).willReturn(student);
 
 		response = mvc.perform(MockMvcRequestBuilders
-						.put("/student/status/" + TEST_STUDENT_ID)
-						.characterEncoding("utf-8")
-						.content(asJsonString(studentDTO))
+						.put(String.format("/student/%d?status=%d&msg=%s", TEST_STUDENT_ID, StudentDTO.NO_HOLDS, ""))
 						.contentType(MediaType.APPLICATION_JSON)
 						.accept(MediaType.APPLICATION_JSON))
 				.andReturn().getResponse();
 
 		assertEquals(200, response.getStatus());
-		StudentDTO result = fromJsonString(response.getContentAsString(), StudentDTO.class);
 		verify(studentRepository).save(any(Student.class));
-		assertNull(result.status);
 	}
 
 	private static String asJsonString(final Object obj) {

@@ -48,28 +48,22 @@ public class StudentController {
 
     /**
      * This method is called by the registration service to update the status and status code of an existing student.
-     * The student_id field is required. This operation is idempotent.
+     * This operation is idempotent.
      * @param student_id The id of the student to be updated.
-     * @param studentDTO The student to be updated.
-     * @return The student that was updated.
+     * @param statusCode The student to be updated.
+     * @param message The message for the reason of a status.
      * @throws ResponseStatusException If the student does not exist.
      */
-    @PutMapping("/student/status/{student_id}")
-    public StudentDTO updateStatus(@PathVariable int student_id, @RequestBody StudentDTO studentDTO) {
-        System.out.println("/student/" + student_id + " called.");
+    @PutMapping("/student/{student_id}")
+    public void updateStatus(@PathVariable int student_id, @RequestParam("status") int statusCode, @RequestParam("msg") String message) {
+        System.out.printf("/student/%d?status=%d&msg=\"%s\" called.", student_id, statusCode, message);
 
         var student = studentRepository.findById(student_id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Student with id '%d' not found.", student_id)));
 
-        // Update the student with the new status code and status
-        student.setStatusCode(studentDTO.statusCode);
-        student.setStatus(studentDTO.status);
+        // Update the student with the new status code and message
+        student.setStatusCode(statusCode);
+        student.setStatus(message == null || message.isEmpty() ? null : message);
         studentRepository.save(student);
-
-        // Match the StudentDTO fields to the Student fields
-        studentDTO.student_id = student.getStudent_id();
-        studentDTO.name = student.getName();
-        studentDTO.email = student.getEmail();
-        return studentDTO;
     }
 }
