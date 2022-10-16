@@ -219,7 +219,6 @@ public class JunitTestSchedule {
 		.andReturn().getResponse();
 
 		assertEquals(200, response.getStatus());
-		StudentDTO result = fromJsonString(response.getContentAsString(), StudentDTO.class);
 		verify(studentRepository).save(any(Student.class));
 	}
 
@@ -232,15 +231,18 @@ public class JunitTestSchedule {
 		student.setName(TEST_STUDENT_NAME);
 		student.setEmail(TEST_STUDENT_EMAIL);
 
-		given(studentRepository.findById(TEST_STUDENT_ID)).willReturn(Optional.of(student));
-		given(studentRepository.save(any(Student.class))).willReturn(student);
+		given(studentRepository.findById(TEST_STUDENT_ID))
+			.willReturn(Optional.of(student));
+		given(studentRepository.save(any(Student.class)))
+			.willReturn(student);
 
 		var holdReason = "Too many books overdue";
 		response = mvc.perform(MockMvcRequestBuilders
-						.put(String.format("/student/%d?status=%d&msg=%s", TEST_STUDENT_ID, StudentDTO.HOLD, holdReason))
-						.contentType(MediaType.APPLICATION_JSON)
-						.accept(MediaType.APPLICATION_JSON))
-				.andReturn().getResponse();
+			.put("/student/%d?status=%d&msg=%s".formatted(
+				TEST_STUDENT_ID, StudentDTO.HOLD, holdReason))
+			.contentType(MediaType.APPLICATION_JSON)
+			.accept(MediaType.APPLICATION_JSON))
+			.andReturn().getResponse();
 
 		assertEquals(200, response.getStatus());
 		verify(studentRepository).save(any(Student.class));
