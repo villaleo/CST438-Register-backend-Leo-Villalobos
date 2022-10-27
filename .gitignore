@@ -21,6 +21,7 @@ target/
 
 # frontend project #
 frontend/
+*.properties
 
 ### NetBeans ###
 /nbproject/private/
