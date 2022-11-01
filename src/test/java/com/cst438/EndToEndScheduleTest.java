@@ -4,21 +4,23 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.cst438.domain.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-
-import com.cst438.domain.Course;
-import com.cst438.domain.CourseRepository;
-import com.cst438.domain.Enrollment;
-import com.cst438.domain.EnrollmentRepository;
 
 /*
  * This example shows how to use selenium testing using the web driver 
@@ -38,13 +40,17 @@ import com.cst438.domain.EnrollmentRepository;
 @SpringBootTest
 public class EndToEndScheduleTest {
 
-	public static final String CHROME_DRIVER_FILE_LOCATION = "C:/chromedriver_win32/chromedriver.exe";
+	public static final String FIREFOX_DRIVER_PATH = "/Users/villaleobos/Documents/Academics/f22/software-eng/RegisterBackend/geckodriver";
+	public static final String FIREFOX_DRIVER = "webdriver.firefox.driver";
 
 	public static final String URL = "http://localhost:3000";
 
+	public static final String TEST_STUDENT_EMAIL = "levillalobos@csumb.edu";
+	public static final String TEST_STUDENT_NAME = "Leo Villalobos";
+
 	public static final String TEST_USER_EMAIL = "test@csumb.edu";
 
-	public static final int TEST_COURSE_ID = 40443; 
+	public static final int TEST_COURSE_ID = 40443;
 
 	public static final String TEST_SEMESTER = "2021 Fall";
 
@@ -61,11 +67,14 @@ public class EndToEndScheduleTest {
 	@Autowired
 	CourseRepository courseRepository;
 
+	@Autowired
+	StudentRepository studentRepository;
+
 	/*
 	 * Student add course TEST_COURSE_ID to schedule for 2021 Fall semester.
 	 */
 	
-	@Test
+	@Disabled
 	public void addCourseTest() throws Exception {
 
 		/*
@@ -87,7 +96,7 @@ public class EndToEndScheduleTest {
 		// IE 		webdriver.ie.driver 		InternetExplorerDriver
 		//@formatter:on
 
-		System.setProperty("webdriver.chrome.driver", CHROME_DRIVER_FILE_LOCATION);
+		System.setProperty("webdriver.chrome.driver", FIREFOX_DRIVER_PATH);
 		WebDriver driver = new ChromeDriver();
 		// Puts an Implicit wait for 10 seconds before throwing exception
 		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
@@ -153,5 +162,46 @@ public class EndToEndScheduleTest {
 			driver.quit();
 		}
 
+	}
+
+	@Test
+	public void addStudent() throws Exception {
+		var student = studentRepository.findByEmail(TEST_STUDENT_EMAIL);
+		if (student != null) {
+			studentRepository.delete(student);
+		}
+
+		System.setProperty(FIREFOX_DRIVER, FIREFOX_DRIVER_PATH);
+		WebDriver driver = new FirefoxDriver();
+
+		try {
+			driver.get(URL);
+			Thread.sleep(SLEEP_DURATION);
+
+			// Fill in pop-up with test data
+			var we = driver.findElement(By.xpath("//button[@id='begin_add_student']"));
+			we.click();
+			we = driver.findElement(By.name("name"));
+			we.sendKeys(TEST_STUDENT_NAME);
+			we = driver.findElement(By.name("email"));
+			we.sendKeys(TEST_STUDENT_EMAIL);
+			we = we.findElement(By.xpath("//button[@id='student_add']"));
+			we.click();
+
+			// Check student was added
+			Assertions.assertNotNull(studentRepository.findByEmail(TEST_STUDENT_EMAIL));
+		}
+		catch (Exception error) {
+			Assertions.fail(error.getMessage());
+		}
+		finally {
+			// Clean database
+			student = studentRepository.findByEmail(TEST_STUDENT_EMAIL);
+			if (student != null) {
+				studentRepository.delete(student);
+			}
+
+			driver.quit();
+		}
 	}
 }
